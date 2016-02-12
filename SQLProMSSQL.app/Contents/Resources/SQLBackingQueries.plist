@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>ColumnsForTable</key>
+	<string>SELECT 
+    c.name &apos;Column Name&apos;,
+    t.Name &apos;Data type&apos;,
+    c.max_length &apos;Max Length&apos;,
+    c.precision ,
+    c.scale ,
+    c.is_nullable,
+    ISNULL(i.is_primary_key, 0) &apos;Primary Key&apos;,
+	object_definition(c.default_object_id) AS columnDefault,
+    c.is_identity
+FROM
+    sys.columns c
+INNER JOIN 
+    sys.types t ON c.system_type_id = t.system_type_id
+LEFT OUTER JOIN 
+    sys.index_columns ic ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+LEFT OUTER JOIN 
+    sys.indexes i ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+WHERE
+    c.object_id = OBJECT_ID(&apos;{TABLE_NAME}&apos;) AND t.Name != &apos;sysname&apos;
+ORDER BY c.column_id ASC</string>
+	<key>List_StoredProceduresInDatabase_NonSystem</key>
+	<string>select
+        specific_schema,
+        specific_name
+        from INFORMATION_SCHEMA.ROUTINES
+        where routine_type = &apos;PROCEDURE&apos;
+        and Left(Routine_Name, 3) NOT IN (&apos;xp_&apos;, &apos;ms_&apos;)
+        ORDER BY specific_schema ASC, specific_name ASC</string>
+	<key>List_FunctionsByTypeInDatabase_NonSystem</key>
+	<string>select
+        specific_schema,
+        specific_name
+        from INFORMATION_SCHEMA.ROUTINES
+        where routine_type = &apos;FUNCTION&apos;
+        and Left(Routine_Name, 3) NOT IN (&apos;sp_&apos;, &apos;xp_&apos;, &apos;ms_&apos;) {EXTRA_WHERE_CLAUSE}
+        ORDER BY specific_schema ASC, specific_name ASC</string>
+	<key>List_UserTypesByTypeInDatabase_NonSystem</key>
+	<string>SELECT SCHEMA_NAME(schema_id), * FROM sys.types WHERE is_user_defined = 1 {EXTRA_WHERE_CLAUSE}
+</string>
+
+	<key>StoredProcedure_ScriptCreateQuery</key>
+	<string>
+        SELECT
+        OBJECTPROPERTY(s.object_id,&apos;ExecIsQuotedIdentOn&apos;) AS QuotedIdentifier,
+        OBJECTPROPERTY(s.object_id, &apos;ExecIsAnsiNullsOn&apos;) AS ANSINulls
+        FROM sys.objects s
+        WHERE
+        s.type IN (&apos;P&apos;,&apos;TR&apos;,&apos;V&apos;,&apos;IF&apos;,&apos;FN&apos;,&apos;TF&apos;) AND s.object_id = OBJECT_ID(&apos;{PROCEDURE_NAME}&apos;)
+        
+        exec sp_helptext &apos;{PROCEDURE_NAME}&apos;</string>
+	<key>Function_AlterQuery</key>
+	<string>
+        SELECT
+        OBJECTPROPERTY(s.object_id,&apos;ExecIsQuotedIdentOn&apos;) AS QuotedIdentifier,
+        OBJECTPROPERTY(s.object_id, &apos;ExecIsAnsiNullsOn&apos;) AS ANSINulls
+        FROM sys.objects s
+        WHERE
+        s.type IN (&apos;P&apos;,&apos;TR&apos;,&apos;V&apos;,&apos;IF&apos;,&apos;FN&apos;,&apos;TF&apos;) AND s.object_id = OBJECT_ID(&apos;{FUNCTION_NAME}&apos;)
+        
+        exec sp_helptext &apos;{FUNCTION_NAME}&apos;</string>
+	<key>Table_CreationQuery</key>
+	<string>
+        select  &apos;CREATE TABLE &apos; + QUOTENAME(sch.name) + &apos;.&apos; + QUOTENAME(so.name) + CHAR(13)+CHAR(10) + &apos;(&apos;
+        + CHAR(13)+CHAR(10)
+
+        -- Substring to our last comma
+        + SUBSTRING(o.list, 1, LEN(o.list) - CHARINDEX(&apos;,&apos;,REVERSE(o.list)))
+
+        + CHAR(13)+CHAR(10) +&apos;)&apos; + CASE WHEN tc.Constraint_Name IS NULL THEN &apos;&apos; ELSE + CHAR(13)+CHAR(10) +&apos;ALTER TABLE &apos; + QUOTENAME(sch.name) + &apos;.&apos; + QUOTENAME(so.Name) + &apos; ADD CONSTRAINT &apos; + tc.Constraint_Name  + &apos; PRIMARY KEY &apos; + &apos; (&apos; + LEFT(j.list, Len(j.list)-1) + &apos;)&apos; END
+        from    sysobjects so
+        INNER JOIN sys.objects so2 ON so2.object_id = so.id
+        INNER JOIN sys.schemas sch ON so2.schema_id = sch.schema_id
+        cross apply
+        (SELECT
+        &apos;  &apos;+ QUOTENAME(column_name) + &apos; &apos; +
+        QUOTENAME(data_type) + case data_type
+        when &apos;sql_variant&apos; then &apos;&apos;
+        when &apos;text&apos; then &apos;&apos;
+        when &apos;int&apos; then &apos;&apos;
+        when &apos;image&apos; then &apos;&apos;
+        when &apos;smallint&apos; then &apos;&apos;
+        when &apos;bigint&apos; then &apos;&apos;
+        when &apos;tinyint&apos; then &apos;&apos;
+        when &apos;money&apos; then &apos;&apos;
+        when &apos;real&apos; then &apos;&apos;
+        when &apos;bit&apos; then &apos;&apos;
+        when &apos;uniqueidentifier&apos; then &apos;&apos;
+        when &apos;ntext&apos; then &apos;&apos;
+        when &apos;datetime&apos; then &apos;&apos;
+        when &apos;xml&apos; then &apos;&apos;
+        when &apos;datetime2&apos; then &apos;(&apos; + cast(DATETIME_PRECISION as varchar) + &apos;)&apos;
+        when &apos;decimal&apos; then &apos;(&apos; + cast(numeric_precision as varchar) + &apos;, &apos; + cast(numeric_scale as varchar) + &apos;)&apos;
+        else coalesce(&apos;(&apos;+case when character_maximum_length = -1 then &apos;MAX&apos; else cast(character_maximum_length as varchar) end +&apos;)&apos;,&apos;&apos;) end + &apos; &apos; +
+        case when exists (
+        select id from syscolumns
+        where object_name(id)=so.name
+        and name=column_name
+        and columnproperty(id,name,&apos;IsIdentity&apos;) = 1
+        ) then
+        &apos;IDENTITY(&apos; +
+        cast(ident_seed(so.name) as varchar) + &apos;,&apos; +
+        cast(ident_incr(so.name) as varchar) + &apos;)&apos;
+        else &apos;&apos;
+        end + &apos; &apos; +
+        (case when IS_NULLABLE = &apos;No&apos; then &apos;NOT &apos; else &apos;&apos; end ) + &apos;NULL&apos; +
+        case when INFORMATION_SCHEMA.COLUMNS.COLUMN_DEFAULT IS NOT NULL THEN &apos; DEFAULT &apos;+ INFORMATION_SCHEMA.COLUMNS.COLUMN_DEFAULT ELSE &apos;&apos; END + &apos;,&apos; + CHAR(10)
+        
+        from INFORMATION_SCHEMA.COLUMNS where table_name = so.name
+        order by ordinal_position
+        FOR XML PATH(&apos;&apos;)) o (list)
+        left join
+        INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+        on  tc.Table_name       = so.Name
+        AND tc.Constraint_Type  = &apos;PRIMARY KEY&apos;
+        cross apply
+        (select &apos;[&apos; + Column_Name + &apos;], &apos;
+        FROM   INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+        WHERE  kcu.Constraint_Name = tc.Constraint_Name
+        ORDER BY
+        ORDINAL_POSITION
+        FOR XML PATH(&apos;&apos;)) j (list)
+        where   xtype = &apos;U&apos;
+        AND so.name NOT IN (&apos;dtproperties&apos;) AND (QUOTENAME(so.name) = QUOTENAME(&apos;{TABLE_NAME}&apos;))</string>
+	<key>Table_MySQLCreationQuery</key>
+	<string><![CDATA[
+        select  'CREATE TABLE `' + QUOTENAME(so.name) + '`' + CHAR(13) + CHAR(10) + '('
+        + CHAR(13)+CHAR(10)
+
+        -- Substring to our last comma
+        + SUBSTRING(o.list, 1, LEN(o.list) - CHARINDEX(',',REVERSE(o.list)))
+
+        + CHAR(13)+CHAR(10) +')' + CASE WHEN tc.Constraint_Name IS NULL THEN '' ELSE + CHAR(13)+CHAR(10) +'ALTER TABLE ' + QUOTENAME(sch.name) + '.' + QUOTENAME(so.Name) + ' ADD CONSTRAINT ' + tc.Constraint_Name  + ' PRIMARY KEY ' + ' (' + LEFT(j.list, Len(j.list)-1) + ')' END
+        from    sysobjects so
+        INNER JOIN sys.objects so2 ON so2.object_id = so.id
+        INNER JOIN sys.schemas sch ON so2.schema_id = sch.schema_id
+        cross apply
+        (SELECT
+        '  '+ QUOTENAME(column_name) + ' ' +
+        QUOTENAME(data_type) + case data_type
+        when 'sql_variant' then ''
+        when 'text' then ''
+        when 'int' then ''
+        when 'image' then ''
+        when 'smallint' then ''
+        when 'bigint' then ''
+        when 'tinyint' then ''
+        when 'money' then ''
+        when 'real' then ''
+        when 'bit' then ''
+        when 'uniqueidentifier' then ''
+        when 'ntext' then ''
+        when 'datetime' then ''
+        when 'xml' then ''
+        when 'datetime2' then '(' + cast(DATETIME_PRECISION as varchar) + ')'
+        when 'decimal' then '(' + cast(numeric_precision as varchar) + ', ' + cast(numeric_scale as varchar) + ')'
+        else coalesce('('+case when character_maximum_length = -1 then 'MAX' else cast(character_maximum_length as varchar) end +')','') end + ' ' +
+        case when exists (
+        select id from syscolumns
+        where object_name(id)=so.name
+        and name=column_name
+        and columnproperty(id,name,'IsIdentity') = 1
+        ) then
+        'IDENTITY(' +
+        cast(ident_seed(so.name) as varchar) + ',' +
+        cast(ident_incr(so.name) as varchar) + ')'
+        else ''
+        end + ' ' +
+        (case when IS_NULLABLE = 'No' then 'NOT ' else '' end ) + 'NULL' +
+        case when INFORMATION_SCHEMA.COLUMNS.COLUMN_DEFAULT IS NOT NULL THEN ' DEFAULT '+ INFORMATION_SCHEMA.COLUMNS.COLUMN_DEFAULT ELSE '' END + ',' + CHAR(10)
+        
+        from INFORMATION_SCHEMA.COLUMNS where table_name = so.name
+        order by ordinal_position
+        FOR XML PATH('')) o (list)
+        left join
+        INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+        on  tc.Table_name       = so.Name
+        AND tc.Constraint_Type  = 'PRIMARY KEY'
+        cross apply
+        (select '[' + Column_Name + '], '
+        FROM   INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+        WHERE  kcu.Constraint_Name = tc.Constraint_Name
+        ORDER BY
+        ORDINAL_POSITION
+        FOR XML PATH('')) j (list)
+        where   xtype = 'U'
+        AND so.name NOT IN ('dtproperties') AND (QUOTENAME(so.name) = QUOTENAME('{TABLE_NAME}'))
+]]></string>
+	<key>StoredProcedure_AlterQuery</key>
+	<string><![CDATA[
+SELECT
+  OBJECTPROPERTY(s.object_id,'ExecIsQuotedIdentOn') AS QuotedIdentifier,
+  OBJECTPROPERTY(s.object_id, 'ExecIsAnsiNullsOn') AS ANSINulls
+FROM
+  sys.objects s
+WHERE
+  s.type IN ('P','TR','V','IF','FN','TF') AND s.object_id = OBJECT_ID('{PROCEDURE_NAME}')
+
+exec sp_helptext '{PROCEDURE_NAME}'
+]]></string>
+	<key>View_AlterQuery</key>
+	<string>
+        SELECT
+        OBJECTPROPERTY(s.object_id,&apos;ExecIsQuotedIdentOn&apos;) AS QuotedIdentifier,
+        OBJECTPROPERTY(s.object_id, &apos;ExecIsAnsiNullsOn&apos;) AS ANSINulls
+        FROM sys.objects s
+        WHERE
+        s.type IN (&apos;P&apos;,&apos;TR&apos;,&apos;V&apos;,&apos;IF&apos;,&apos;FN&apos;,&apos;TF&apos;) AND s.object_id = OBJECT_ID(&apos;{VIEW_NAME}&apos;);
+
+SELECT
+    m.definition
+FROM sys.views v
+INNER JOIN sys.sql_modules m ON m.object_id = v.object_id
+WHERE v.object_id = OBJECT_ID('{VIEW_NAME}')</string>
+
+
+
+
+
+	<key>List_ViewsInDatabase_NonSystem</key>
+	<string>
+        SELECT
+        QUOTENAME(SCHEMA_NAME(schema_id)) + &apos;.&apos; + QUOTENAME(name) AS escapedFullViewPath,
+        SCHEMA_NAME(schema_id) AS schemaName,
+        name AS viewName
+        FROM sys.views
+        ORDER BY
+        QUOTENAME(SCHEMA_NAME(schema_id)) + &apos;.&apos; + QUOTENAME(name) ASC
+        GO</string>
+	<key>List_KeysForTable</key>
+	<string>SELECT
+        *
+        FROM (
+        SELECT
+        [CONSTRAINT_NAME] AS keyName,
+        1 AS isPrimaryKey,
+        0 AS isForeignKey
+        FROM
+        INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+        WHERE
+        OBJECTPROPERTY(OBJECT_ID(constraint_name), &apos;IsPrimaryKey&apos;) = 1
+        AND OBJECT_ID(table_schema + &apos;.&apos; + table_name) = OBJECT_ID(&apos;{TABLE_NAME}&apos;)
+        
+        UNION
+        
+        SELECT
+        name,
+        0 AS isPrimaryKey,
+        1 AS isForeignKey
+        FROM sys.foreign_keys
+        WHERE
+        parent_object_id = OBJECT_ID(&apos;{TABLE_NAME}&apos;)
+        ) AS KeysTable
+        ORDER BY isPrimaryKey DESC, keyName ASC</string>
+	<key>List_PrimaryKeysForTable</key>
+	<string>
+        SELECT
+        column_name AS primarykeycolumn
+        FROM
+        INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS TC
+        INNER JOIN
+        INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KU ON TC.CONSTRAINT_TYPE = &apos;PRIMARY KEY&apos; AND TC.CONSTRAINT_NAME = KU.CONSTRAINT_NAME
+        AND
+        -- Object ids need to match that from our database
+        object_id(KU.table_schema + &apos;.&apos; + KU.table_name) = object_id(&apos;{SCHEMA_AND_TABLE_NAME}&apos;)
+        ORDER BY KU.TABLE_NAME, KU.ORDINAL_POSITION;
+        </string>
+	<key>List_EntriesForAutocomplete</key>
+	<string>
+SELECT
+DISTINCT
+SCH.name AS schemaName,
+T.name AS TableName,
+C.name AS ColumnName,
+P.name AS DataType,
+P.max_length AS DataSize,
+CAST(P.precision AS VARCHAR) +&apos;/&apos;+ CAST(P.scale AS VARCHAR) AS Precision
+FROM
+sys.objects AS T
+INNER JOIN sys.schemas AS SCH ON T.schema_id = SCH.schema_id
+JOIN sys.columns AS C ON T.object_id = C.object_id
+JOIN sys.types AS P ON C.system_type_id=P.system_type_id
+WHERE
+T.type_desc = &apos;USER_TABLE&apos;
+ORDER BY SCH.name ASC, T.name ASC, C.name ASC
+        </string>
+	<key>NewStoredProcedure</key>
+	<string>CREATE PROCEDURE &lt;MyNewProcedure&gt;
+AS
+BEGIN
+
+  print &apos;Enter Stored Procedure here&apos;
+
+END</string>
+	<key>NewFunction</key>
+	<string>CREATE FUNCTION &lt;MyNewFunction&gt;
+(
+)
+RETURNS &lt;TABLE or DATATYPE&gt;
+AS
+BEGIN
+
+print &apos;Enter function here&apos;
+
+RETURN
+(
+    &lt;SELECT STATEMENT OR RESULT&gt;
+)
+
+END</string>
+	<key>NewTable</key>
+	<string>CREATE TABLE &lt;myNewTable&gt;
+(
+    &lt;firstColumn&gt; INT PRIMARY KEY IDENTITY,
+    &lt;secondColumn&gt; NVARCHAR(256)
+)</string>
+	<key>List_Federations</key>
+	<string>SELECT
+        feds.federation_id,
+        feds.name,
+        dis.distribution_name,
+        types.name,
+        dis.distribution_type
+        FROM
+        sys.federations AS feds INNER JOIN sys.federation_distributions AS dis ON feds.federation_id = dis.federation_id
+        INNER JOIN sys.types AS types ON types.system_type_id = dis.system_type_id</string>
+	<key>UserDefinedDataType_CreationQuery</key>
+	<string>
+        exec sp_executesql N&apos;SELECT
+        st.name AS [Name],
+        sst.name AS [Schema],
+        ISNULL(s1st.name, N&apos;&apos;&apos;&apos;) AS [Owner],
+        CAST(case when st.principal_id is null then 1 else 0 end AS bit) AS [IsSchemaOwned],
+        st.user_type_id AS [ID],
+        CAST(CASE WHEN baset.name IN (N&apos;&apos;nchar&apos;&apos;, N&apos;&apos;nvarchar&apos;&apos;) AND st.max_length &lt;&gt; -1 THEN st.max_length/2 ELSE st.max_length END AS int) AS [Length],
+        CAST(st.precision AS int) AS [NumericPrecision],
+        CAST(st.scale AS int) AS [NumericScale],
+        CAST(CASE WHEN baset.name IN (N&apos;&apos;decimal&apos;&apos;, N&apos;&apos;int&apos;&apos;, N&apos;&apos;numeric&apos;&apos;, N&apos;&apos;smallint&apos;&apos;, N&apos;&apos;image&apos;&apos;, N&apos;&apos;tinyint&apos;&apos;, N&apos;&apos;bigint&apos;&apos;) THEN 1 ELSE 0 END AS bit) AS [AllowIdentity],
+        st.max_length AS [MaxLength],
+        st.is_nullable AS [Nullable],
+        (case when st.default_object_id = 0 then N&apos;&apos;&apos;&apos; else def.name end) AS [Default],
+        (case when st.default_object_id = 0 then N&apos;&apos;&apos;&apos; else schema_name(def.schema_id) end) AS [DefaultSchema],
+        (case when st.rule_object_id = 0 then N&apos;&apos;&apos;&apos; else rul.name end) AS [Rule],
+        (case when st.rule_object_id = 0 then N&apos;&apos;&apos;&apos; else schema_name(rul.schema_id) end) AS [RuleSchema],
+        ISNULL(st.collation_name, N&apos;&apos;&apos;&apos;) AS [Collation],
+        CAST(CASE WHEN baset.name IN ( N&apos;&apos;varchar&apos;&apos;, N&apos;&apos;varbinary&apos;&apos;, N&apos;&apos;nvarchar&apos;&apos; ) THEN 1 ELSE 0 END AS bit) AS [VariableLength],
+        baset.name AS [SystemType]
+        FROM
+        sys.types AS st
+        INNER JOIN sys.schemas AS sst ON sst.schema_id = st.schema_id
+        LEFT OUTER JOIN sys.database_principals AS s1st ON s1st.principal_id = ISNULL(st.principal_id, (TYPEPROPERTY(QUOTENAME(SCHEMA_NAME(st.schema_id)) + &apos;&apos;.&apos;&apos; + QUOTENAME(st.name), &apos;&apos;OwnerId&apos;&apos;)))
+        LEFT OUTER JOIN sys.types AS baset ON (baset.user_type_id = st.system_type_id and baset.user_type_id = baset.system_type_id) or ((baset.system_type_id = st.system_type_id) and (baset.user_type_id = st.user_type_id) and (baset.is_user_defined = 0) and (baset.is_assembly_type = 1))
+        LEFT OUTER JOIN sys.objects AS def ON def.object_id = st.default_object_id
+        LEFT OUTER JOIN sys.objects AS rul ON rul.object_id = st.rule_object_id
+        WHERE
+        (st.schema_id!=4 and st.system_type_id!=240 and st.user_type_id != st.system_type_id and st.is_table_type != 1)and(st.name=@_msparam_0 and sst.name=@_msparam_1)&apos;,N&apos;@_msparam_0 nvarchar(4000),@_msparam_1 nvarchar(4000)&apos;,@_msparam_0=N&apos;{TYPE}&apos;,@_msparam_1=N&apos;{SCHEMA}&apos;</string>
+	<key>List_IndexesForTable</key>
+	<string>SELECT
+        ind.name AS IndexName,
+        ind.index_id AS IndexId,
+        ind.is_primary_key AS isPK,
+        ind.is_unique AS isUnique,
+        ind.is_unique_constraint AS isUnique2
+        FROM
+        sys.indexes ind
+        INNER JOIN
+        sys.tables t ON ind.object_id = t.object_id
+        WHERE
+        t.is_ms_shipped = 0
+        AND t.object_id = OBJECT_ID(&apos;{TABLE_NAME}&apos;)
+        ORDER BY 
+        IndexId
+</string>
+	<key>List_IndexesAndColumnsForTable</key>
+	<string>SELECT
+        t.name AS TableName,
+        ind.name AS IndexName,
+        ind.index_id AS IndexId,
+        ic.index_column_id AS ColumnId,
+        col.name AS ColumnName,
+        ind.is_primary_key AS isPK,
+        ind.is_unique AS isUnique,
+        ind.is_unique_constraint AS isUnique2,
+        t.*
+        FROM
+        sys.indexes ind
+        INNER JOIN
+        sys.index_columns ic ON  ind.object_id = ic.object_id and ind.index_id = ic.index_id
+        INNER JOIN
+        sys.columns col ON ic.object_id = col.object_id and ic.column_id = col.column_id
+        INNER JOIN
+        sys.tables t ON ind.object_id = t.object_id
+        WHERE
+        t.is_ms_shipped = 0
+        AND t.object_id = OBJECT_ID(&apos;{TABLE_NAME}&apos;)
+        ORDER BY 
+        IndexId, ColumnId
+</string>
+	<key>List_TriggersForTableWithDetails</key>
+	<string>exec sp_executesql N&apos;SELECT
+        tr.name AS [Name],
+        CAST(ISNULL(OBJECTPROPERTYEX(tr.object_id,N&apos;&apos;ExecIsAnsiNullsOn&apos;&apos;),0) AS bit) AS [AnsiNullsStatus],
+        CAST(ISNULL(OBJECTPROPERTYEX(tr.object_id,N&apos;&apos;ExecIsQuotedIdentOn&apos;&apos;),0) AS bit) AS [QuotedIdentifierStatus],
+        ISNULL(smtr.definition, ssmtr.definition) AS definition,
+        ~trr.is_disabled AS [IsEnabled],
+        CAST(CASE WHEN ISNULL(smtr.definition, ssmtr.definition) IS NULL THEN 1 ELSE 0 END AS bit) AS [IsEncrypted],
+        case when amtr.object_id is null then N&apos;&apos;&apos;&apos; else asmbltr.name end AS [AssemblyName],
+        case when amtr.object_id is null then N&apos;&apos;&apos;&apos; else amtr.assembly_class end AS [ClassName],
+        case when amtr.object_id is null then N&apos;&apos;&apos;&apos; else amtr.assembly_method end AS [MethodName],
+        case when amtr.object_id is null then case isnull(smtr.execute_as_principal_id, -1) when -1 then 1 when -2 then 2 else 3 end else case isnull(amtr.execute_as_principal_id, -1) when -1 then 1 when -2 then 2 else 3 end end AS [ExecutionContext],
+        case when amtr.object_id is null then ISNULL(user_name(smtr.execute_as_principal_id),N&apos;&apos;&apos;&apos;) else user_name(amtr.execute_as_principal_id) end AS [ExecutionContextPrincipal],
+        CAST(tr.is_ms_shipped AS bit) AS [IsSystemObject],
+        trr.is_instead_of_trigger AS [InsteadOf],
+        CAST(ISNULL(tei.object_id,0) AS bit) AS [Insert],
+        CASE WHEN tei.is_first = 1 THEN 0 WHEN tei.is_last = 1 THEN 2 ELSE 1 END AS [InsertOrder],
+        CAST(ISNULL(teu.object_id,0) AS bit) AS [Update],
+        CASE WHEN teu.is_first = 1 THEN 0 WHEN teu.is_last = 1 THEN 2	ELSE 1 END AS [UpdateOrder],
+        CAST(ISNULL(ted.object_id,0) AS bit) AS [Delete],
+        CASE WHEN ted.is_first = 1 THEN 0 WHEN ted.is_last = 1 THEN 2	ELSE 1 END AS [DeleteOrder],
+        CASE WHEN tr.type = N&apos;&apos;TR&apos;&apos; THEN 1 WHEN tr.type = N&apos;&apos;TA&apos;&apos; THEN 2 ELSE 1 END AS [ImplementationType],
+        trr.is_not_for_replication AS [NotForReplication]
+        FROM
+        sys.tables AS tbl
+        INNER JOIN sys.objects AS tr ON (tr.type in (@_msparam_0, @_msparam_1)) AND (tr.parent_object_id=tbl.object_id)
+        LEFT OUTER JOIN sys.assembly_modules AS mod ON mod.object_id = tr.object_id
+        LEFT OUTER JOIN sys.sql_modules AS smtr ON smtr.object_id = tr.object_id
+        LEFT OUTER JOIN sys.system_sql_modules AS ssmtr ON ssmtr.object_id = tr.object_id
+        LEFT OUTER JOIN sys.assemblies AS asmbl ON asmbl.assembly_id = mod.assembly_id
+        LEFT OUTER JOIN sys.assembly_modules AS amtr ON amtr.object_id = tr.object_id
+        LEFT OUTER JOIN sys.assemblies AS asmbltr ON asmbltr.assembly_id = amtr.assembly_id
+        INNER JOIN sys.triggers AS trr ON trr.object_id = tr.object_id
+        LEFT OUTER JOIN sys.trigger_events AS tei ON tei.object_id = tr.object_id and tei.type=@_msparam_2
+        LEFT OUTER JOIN sys.trigger_events AS teu ON teu.object_id = tr.object_id and teu.type=@_msparam_3
+        LEFT OUTER JOIN sys.trigger_events AS ted ON ted.object_id = tr.object_id and ted.type=@_msparam_4
+        WHERE
+        ((tbl.name=@_msparam_6 and SCHEMA_NAME(tbl.schema_id)=@_msparam_7))&apos;,N&apos;@_msparam_0 nvarchar(4000),@_msparam_1 nvarchar(4000),@_msparam_2 nvarchar(4000),@_msparam_3 nvarchar(4000),@_msparam_4 nvarchar(4000),@_msparam_6 nvarchar(4000),@_msparam_7 nvarchar(4000)&apos;,@_msparam_0=N&apos;TR&apos;,@_msparam_1=N&apos;TA&apos;,@_msparam_2=N&apos;1&apos;,@_msparam_3=N&apos;2&apos;,@_msparam_4=N&apos;3&apos;,@_msparam_6=N&apos;{TABLE_NAME}&apos;,@_msparam_7=N&apos;{SCHEMA_NAME}&apos;</string>
+	<key>NewTrigger</key>
+	<string>CREATE TRIGGER &lt;newTriggerName&gt; ON &lt;targetTableName&gt;
+FOR INSERT
+AS
+	PRINT &apos;AFTER INSERT trigger fired.&apos;
+GO</string>
+	<key>Table_DropPrimaryKey</key>
+	<string>DECLARE @table NVARCHAR(512), @sql NVARCHAR(MAX);
+
+SELECT @table = N&apos;{TABLE_NAME}&apos;;
+
+SELECT @sql = &apos;ALTER TABLE &apos; + @table 
+    + &apos; DROP CONSTRAINT &apos; + name + &apos;;&apos;
+    FROM sys.key_constraints
+    WHERE [type] = &apos;PK&apos;
+    AND [parent_object_id] = OBJECT_ID(@table);
+
+EXEC sp_executeSQL @sql;</string>
+	<key>Table_DropDefaultForColumnIfExists</key>
+	<string>declare @table_name nvarchar(256)
+declare @col_name nvarchar(256)
+declare @Command  nvarchar(1000)
+
+set @table_name = N&apos;{TABLE_NAME}&apos;
+set @col_name = N&apos;{COLUMN_NAME}&apos;
+
+select @Command = &apos;ALTER TABLE &apos; + @table_name + &apos; drop constraint &apos; + d.name
+ from sys.tables t   
+  join    sys.default_constraints d       
+   on d.parent_object_id = t.object_id  
+  join    sys.columns c      
+   on c.object_id = t.object_id      
+    and c.column_id = d.parent_column_id
+ where t.name = @table_name
+  and c.name = @col_name
+
+--print @Command
+
+execute (@Command)</string>
+	<key>Table_ReplaceDefaultForColumn</key>
+	<string><![CDATA[
+DECLARE @ExistingDefaultName NVARCHAR(MAX)
+
+SELECT
+  @ExistingDefaultName = d.name
+FROM
+  sys.tables t
+JOIN sys.default_constraints d ON d.parent_object_id = t.object_id  
+JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = d.parent_column_id
+WHERE t.object_id = OBJECT_ID(N'{TABLE_NAME}') AND c.object_id = OBJECT_ID(N'{COLUMN_NAME}')
+
+IF(LEN(@ExistingDefaultName) > 0)
+BEGIN
+
+  EXECUTE(N'ALTER TABLE {TABLE_NAME} DROP ' + @ExistingDefaultName)
+
+  EXECUTE(N'ALTER TABLE {TABLE_NAME} ADD CONSTRAINT ' + @ExistingDefaultName + N' DEFAULT ({NEW_DEFAULT}) FOR {COLUMN_NAME}')
+
+END
+ELSE
+BEGIN
+  ALTER TABLE {TABLE_NAME} ADD DEFAULT ({NEW_DEFAULT}) FOR {COLUMN_NAME}
+END
+]]></string>
+	<key>Table_RemoveDefaultForColumn</key>
+	<string><![CDATA[
+DECLARE @ExistingDefaultName NVARCHAR(MAX)
+
+SELECT
+  @ExistingDefaultName = d.name
+FROM
+  sys.tables t
+JOIN sys.default_constraints d ON d.parent_object_id = t.object_id  
+JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = d.parent_column_id
+WHERE t.object_id = OBJECT_ID(N'{TABLE_NAME}') AND c.object_id = OBJECT_ID(N'{COLUMN_NAME}')
+
+IF(LEN(@ExistingDefaultName) > 0)
+BEGIN
+
+  EXECUTE(N'ALTER TABLE {TABLE_NAME} DROP ' + @ExistingDefaultName)
+
+END
+]]></string>
+
+	<key>Script_ClearDatabase</key>
+    <string>/*
+  Description: This script will remove all tables, views, functions, stored procedures and user defined types from a database.
+*/
+        declare @n char(1)
+        set @n = char(10)
+        
+        declare @stmt nvarchar(max)
+        
+        -- procedures
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;drop procedure [&apos; + schema_name(schema_id) + &apos;].[&apos; + name + &apos;]&apos;
+        from sys.procedures
+        
+        
+        -- check constraints
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;alter table [&apos; + schema_name(schema_id) + &apos;].[&apos; + object_name( parent_object_id ) + &apos;]    drop constraint [&apos; + name + &apos;]&apos;
+        from sys.check_constraints
+        
+        -- functions
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;drop function [&apos; + schema_name(schema_id) + &apos;].[&apos; + name + &apos;]&apos;
+        from sys.objects
+        where type in ( &apos;FN&apos;, &apos;IF&apos;, &apos;TF&apos; )
+        
+        -- views
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;drop view [&apos; + schema_name(schema_id) + &apos;].[&apos; + name + &apos;]&apos;
+        from sys.views
+        
+        -- foreign keys
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;alter table [&apos; + schema_name(schema_id) + &apos;].[&apos; + object_name( parent_object_id ) + &apos;] drop constraint [&apos; + name + &apos;]&apos;
+        from sys.foreign_keys
+        
+        -- tables
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;drop table [&apos; + schema_name(schema_id) + &apos;].[&apos; + name + &apos;]&apos;
+        from sys.tables
+        
+        -- user defined types
+        select @stmt = isnull( @stmt + @n, &apos;&apos; ) +
+        &apos;drop type [&apos; + schema_name(schema_id) + &apos;].[&apos; + name + &apos;]&apos;
+        from sys.types
+        where is_user_defined = 1
+        
+        
+        exec sp_executesql @stmt</string>
+	<key>Script_SPWHO3</key>
+    <string>/*
+  Description: Generates similar results as sp_who2, however includes additional information.
+  Provided by: http://sqlserverplanet.com/dba/a-better-sp_who2-using-dmvs-sp_who3
+*/
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+SELECT
+    SPID                = er.session_id
+    ,BlkBy              = CASE WHEN lead_blocker = 1 THEN -1 ELSE er.blocking_session_id END
+    ,ElapsedMS          = er.total_elapsed_time
+    ,CPU                = er.cpu_time
+    ,IOReads            = er.logical_reads + er.reads
+    ,IOWrites           = er.writes     
+    ,Executions         = ec.execution_count  
+    ,CommandType        = er.command         
+    ,LastWaitType       = er.last_wait_type    
+    ,ObjectName         = OBJECT_SCHEMA_NAME(qt.objectid,dbid) + &apos;.&apos; + OBJECT_NAME(qt.objectid, qt.dbid)  
+    ,SQLStatement       =
+        SUBSTRING
+        (
+            qt.text,
+            er.statement_start_offset/2,
+            (CASE WHEN er.statement_end_offset = -1
+                THEN LEN(CONVERT(nvarchar(MAX), qt.text)) * 2
+                ELSE er.statement_end_offset
+                END - er.statement_start_offset)/2
+        )        
+    ,STATUS             = ses.STATUS
+    ,[Login]            = ses.login_name
+    ,Host               = ses.host_name
+    ,DBName             = DB_Name(er.database_id)
+    ,StartTime          = er.start_time
+    ,Protocol           = con.net_transport
+    ,transaction_isolation =
+        CASE ses.transaction_isolation_level
+            WHEN 0 THEN &apos;Unspecified&apos;
+            WHEN 1 THEN &apos;Read Uncommitted&apos;
+            WHEN 2 THEN &apos;Read Committed&apos;
+            WHEN 3 THEN &apos;Repeatable&apos;
+            WHEN 4 THEN &apos;Serializable&apos;
+            WHEN 5 THEN &apos;Snapshot&apos;
+        END
+    ,ConnectionWrites   = con.num_writes
+    ,ConnectionReads    = con.num_reads
+    ,ClientAddress      = con.client_net_address
+    ,Authentication     = con.auth_scheme
+    ,DatetimeSnapshot   = GETDATE()
+FROM sys.dm_exec_requests er
+LEFT JOIN sys.dm_exec_sessions ses
+ON ses.session_id = er.session_id
+LEFT JOIN sys.dm_exec_connections con
+ON con.session_id = ses.session_id
+OUTER APPLY sys.dm_exec_sql_text(er.sql_handle) AS qt
+OUTER APPLY 
+(
+    SELECT execution_count = MAX(cp.usecounts)
+    FROM sys.dm_exec_cached_plans cp
+    WHERE cp.plan_handle = er.plan_handle
+) ec
+OUTER APPLY
+(
+    SELECT
+        lead_blocker = 1
+    FROM master.dbo.sysprocesses sp
+    WHERE sp.spid IN (SELECT blocked FROM master.dbo.sysprocesses)
+    AND sp.blocked = 0
+    AND sp.spid = er.session_id
+) lb
+WHERE er.sql_handle IS NOT NULL
+AND er.session_id != @@SPID
+ORDER BY
+    er.blocking_session_id DESC,
+    er.logical_reads + er.reads DESC,
+    er.session_id</string>
+    <key>Script_TableSizes</key>
+    <string><![CDATA[/*
+  Description: Lists all tables in a database, along with the physical size and row count.
+  Provided by: http://stackoverflow.com/questions/7892334/get-size-of-all-tables-in-database
+*/
+SELECT
+    s.Name AS SchemaName,
+    t.NAME AS TableName,
+    p.rows AS RowCounts,
+    SUM(a.total_pages) * 8 AS TotalSpaceKB, 
+    SUM(a.used_pages) * 8 AS UsedSpaceKB, 
+    (SUM(a.total_pages) - SUM(a.used_pages)) * 8 AS UnusedSpaceKB
+FROM 
+    sys.tables t
+INNER JOIN      
+    sys.indexes i ON t.OBJECT_ID = i.object_id
+INNER JOIN 
+    sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+INNER JOIN 
+    sys.allocation_units a ON p.partition_id = a.container_id
+LEFT OUTER JOIN 
+    sys.schemas s ON t.schema_id = s.schema_id
+WHERE 
+    t.NAME NOT LIKE 'dt%' 
+    AND t.is_ms_shipped = 0
+    AND i.OBJECT_ID > 255 
+GROUP BY 
+    t.Name, s.Name, p.Rows
+ORDER BY 
+    s.Name, t.Name]]></string>
+    <key>Script_LongRunningQueries</key>
+    <string><![CDATA[/*
+  Description: Lists all previously executed queries and the times taken.
+  Provided by: http://blog.sqlauthority.com/2009/01/02/sql-server-2008-2005-find-longest-running-query-tsql/
+*/
+select distinct top 10
+    substring(t.text, (s.statement_start_offset/2)+1, (((case s.statement_end_offset when -1 then datalength(t.text) else s.statement_end_offset end) - s.statement_start_offset)/2) + 1) as SqlText 
+    , (case when s.statement_start_offset > 0 then substring(t.text, 0, (s.statement_start_offset/2)+1) else '' end) as SqlParameters 
+    , s.execution_count as ExecutionCount 
+    , (s.max_elapsed_time/1000) as MaxElapsedTimeMs 
+    , (s.min_elapsed_time/1000) as MinElapsedTimeMs 
+    , isnull((s.total_elapsed_time/1000) / nullif(s.execution_count, 0), 0) as AvgElapsedTimeMs 
+    , s.creation_time as LogCreatedOn 
+    , s.last_execution_time as LastExecutionTime 
+    , isnull(s.execution_count / nullif(datediff(s, s.creation_time, getdate()), 0), 0) as FrequencyPerSec 
+from 
+    sys.dm_exec_query_stats as s 
+        cross apply 
+    sys.dm_exec_sql_text(s.sql_handle) as t 
+order by 
+    isnull((s.total_elapsed_time/1000) / nullif(s.execution_count, 0), 0) desc]]></string>
+    <key>Script_ListConnections</key>
+    <string><![CDATA[/*
+  Description: Lists all connections linked to the database.
+  Provided by: http://www.diademblogs.com/database/some-useful-sql-commands-for-ms-sql-db-admins
+*/
+SELECT DB_NAME(dbid)AS ConnectedToDB,
+hostname, program_name,loginame,
+cpu, physical_io, memusage, login_time,
+last_batch, [status]
+FROM master.dbo.sysprocesses
+ORDER BY dbid, login_time, last_batch
+GO]]></string>
+    <key>List_SearchableDatabaseEntries</key>
+<string><![CDATA[-- Tables
+SELECT
+  QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name),
+  SCHEMA_NAME(schema_id),
+  name AS SchemaTable,
+  'TABLE' AS type
+FROM
+  sys.tables
+
+UNION ALL
+
+-- Views
+SELECT
+  QUOTENAME(SCHEMA_NAME(schema_id)) + '.' + QUOTENAME(name) AS fullName,
+  SCHEMA_NAME(schema_id) AS schemaName,
+  name AS objectName,
+  'VIEW' AS type
+FROM
+  sys.views
+
+UNION ALL
+
+-- Functions & Procedures
+SELECT
+  QUOTENAME(specific_schema) + '.' + QUOTENAME(specific_name) AS fullName,
+  specific_schema AS objectName,
+  specific_name AS objectName,
+  routine_type AS type
+FROM
+  INFORMATION_SCHEMA.ROUTINES
+WHERE routine_type IN('PROCEDURE', 'FUNCTION') AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_')
+
+ORDER BY 2 ASC, 3 ASC
+]]></string>
+<key>XMLColumnsForTable</key>
+<string><![CDATA[
+SELECT 
+	DISTINCT
+    c.Name
+FROM
+    sys.columns c
+INNER JOIN 
+    sys.types t ON c.user_type_id = t.user_type_id
+WHERE
+    c.object_id = OBJECT_ID('{SCHEMA_AND_TABLE_NAME}') AND t.Name = 'xml']]></string>
+</dict>
+</plist>

@@ -1,0 +1,178 @@
+1.0.1
++ Added a support link (Help -> Support).
++ Fixed an issue where there was no search option in the query editor.
++ Fixed an issue that could cause connections to named instances to fail.
++ Fixed an issue where expanding a tables columns or keys may not work if
+  the table did not belong to the default schema.
++ Fixed an issue where the 'Select top 100 rows' context menu would not work
+  if the schema was not the default.
++ Improvements to autocomplete.
++ Dragging an item from the database tree to the query editor will now set focus.
++ Fixed 'Script Table' to properly show schema.
+
+1.0.2:
++ Added Connect and Disconnect context menu items when right clicking a server.
++ When executing a query with multiple columns, the column will no longer be shrunk.
++ Added a column header to results to show the entry number.
++ Fixed an issue where column names may not be displayed in the correct order.
++ Fixed an issue where columns may appear more than once in the database tree view.
++ When executing a query, primary keys are now detected and displayed in blue. (Only
+  when querying against a single table).
+
+1.0.3:
++ Added the ability to copy the results from a query.
++ If a select query includes the primary keys for a single table, a user can now edit
+  the data inline.
+
+1.0.4:
++ Fixed an issue that would cause crashes on Case-Sensitive databases.
++ Added Functions to the Programmability section.
++ Tab/Shift+Tab now indents code rather than replacing it with the tab character (visual studios style behaviour).
++ CMD + ] (or CMD + [) also indents code (xcode style behaviour).
++ Added better logging, plus a menu entry (view -> logs) to open the logs directory.
++ Fixed an issue which could cause hangs or crashes for some users.
++ Fixed an issue which could cause duplicate autocomplete entries.
+
+1.0.5:
++ Added a context menu to the result sets, which includes 'Copy' and 'Copy with Headers' items.
+
+1.0.6:
++ Improved support for SQL Server 2014.
++ Improved support for saving, opening and closing tabs (including warnings for unsaved changes).
++ You can now switch servers/databases for a query tab.
+
+1.0.8:
++ Fixed an issue where port specification was not working properly.
++ Fixed an issue with the connection dialog where updated text may not apply straight away.
++ Added general preferences.
++ Added themes so that users can now customize the query display.
++ Fixed an issue where auto-complete would sometimes not appear unless the keyboard
+  shortcut (ESCAPE) was pressed.
++ Added column size to tree list.
+
+1.0.9:
++ Fixed database connection timeouts if the app sat open in the background for a long
+  period of time.
++ Added a refresh menu item to the server node.
++ Added an export option to the result set context menu.
++ Clear results messages on execution start.
++ Tree view no longer scrolls over itself.
+
+1.0.10:
++ Added fullscreen support.
++ Added Windows Authentication support.
++ Added support for user defined types.
++ Added expandle column options in results.
++ Added bracket matching in query views.
++ Added new 'Script as' menues for tables, functions, procedures and types.
++ Added triggers to the table list.
++ Added indexes to the table list.
++ Added menus (and shortcuts) for uppercasing and lowercasing selected text.
++ Added support for linking query errors to executed code.
++ Can now cancel long running queries.
++ UI cleanup.
++ Fixed an issue that would cause logins to fail if the username or password
+  was greater than 30 characters.
++ Fixed an issue with newlines when exporting a CSV file.
++ Fixed an issue that could cause black lines to appear when scrolling.
++ Fixed a few issues around opening files.
++ Fixed an issue that could cause freezeing when launching the application
+  with an existing sql file.
+
+1.0.11:
++ Added a server browser for quicker connections.
++ Fixed an issue instance connections required the port to be specified. This only works if SQL Server Browser Service is enabled on the target server. Otherwise the port is still required.
++ Added support for netbios name resolution.
++ Fixed an issue where autocomplete may sometimes replace more than it should.
++ Fixed an issue where copying table results would not format dates properly.
++ You can now drag/drop the 'columns' entry and get a csv of columns (list of columns must be expanded first).
++ Copy as insert now includes a individual or batch option.
++ Additional improvements to autocomplete.
++ Added a support button to the connection screen.
++ Fixed an issue where if a selected query range was executed rather than the entire range,
+  then the message line numbers would be offset.
++ Fixed an issue with detecting unicode strings (in query ex: SELECT N'hello world')
++ Added search/filter in the table view.
++ Added an table row insert dialog.
++ When primary keys are detected in result sets, the context menu now includes an edit,
+  delete and insert items.
++ Increased the default text size for query results.
+
+1.0.12:
++ If there are any unsaved tabs when closing the application, you will now be giving the
+  option to review them.
++ Fixed an issue where when saving a file, the tab name may not be updated.
++ Fixed issues with handing DST.
++ Added an Alter option for views (script only).
++ Log files now get purged automatically after five days.
++ Fixed an issue with intellisense that would cause replacements to not work correctly.
+
+1.0.13:
++ Minor UI changes around database selection UI.
++ Freetds low level logging is now disabled by default, as it uses a large amount of disk space.
+  It can be enabled via preferences.
++ Autocomplete bug fixes.
++ Fixed an issue when switching between servers which could cause the old server
+  credentials to be used.
++ A few data type fixes (when exporting table structures).
+
+1.0.14:
++ Fixed an issue where column 'scale' did not show up properly in the columns view or when
+  scripting a table.
+
+1.0.15:
++ Picking a database via the database dropdown now closes the selection window.
++ Auto complete fixes.
++ Improved application state saving.
++ Added support for NTMLv2.
++ Fixed a crash that could happen when editing data.
++ Fixed an issue that could cause the save and save as menus to become disabled.
++ Fixed a crash that could occur when connecting to multiple databases at once.
+
+1.0.16:
++ Added single cell selection (like a spreadsheet) rather than whole row selection.
++ Connect now uses the current window if there is one, otherwise it uses a new document.
++ Added keyboard shortcut for connect button (Command-Shift-C).
++ Updated logic for the new tab shortcut.
++ Fixed a crashing issue that could happen during query editor undo/redo.
++ Fixed an issue with connecting to Azure databases.
++ Fixed an issue that could cause query results scrollers to be slighly offset on initial load.
++ Fixed an issue with processing smalldate data types.
+
+1.0.17:
++ Fixed an issue where closing a background tab would prompt to save the current tab.
++ Fixed an issue that could cause crashes when deleting a column or table.
++ Fixed an issue which could cause crashes when expanding encrypted triggers.
++ Fixed an issue that could sometimes cause problems when typing queries in non-engligh keyboards.
++ Improved initial connection performance.
+
+1.0.18:
++ Support for blank passwords.
++ Binary data in results grid now displays as it would in Microsoft Management studio.
+
+1.0.19:
++ Huge query performance improvements.
++ Added XML expansion dialog for query results.
++ Fixed an issue with typing non-english languages.
++ Fixed an issue in query primary key detection.
++ Started work on the Table designer. Table columns can now be 'altered'. Indexes, foreign keys and triggers are now visible via the table designer.
++ Improved double click selection of @variables.
++ Added support for variable and function syntax highlighting.
++ Added a menu item for clearing recent connections.
+
+1.0.20:
++ Fixed an issue where altering stored procedures may not load.
++ Improved database tree display for single schema databases.
++ Fixed a few issues with changing a columns data type via the table designer.
++ Improvements to auto-complete.
++ Fix for line numbers in OSX Yosemite 10.10.3.
++ Fixed an issue where when scrolling as results load, the scroll may scoll back to the top.
+
+1.0.21:
++ Return key now works as a shortcut for the connection screen.
++ Improvements to syntax highlighting performance.
++ Fixed an issue which could sometimes cause crashes during syntax highlight.
++ Added a pully on the results view for easier resizing.
+
+
++ Fixed an issue with CONCAT_NULL_YIELDS_NULL.

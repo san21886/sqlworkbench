@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<string>MAX</string>
+	<string>newid</string>
+	<string>COUNT</string>
+	<string>CAST</string>
+	<string>LEN</string>
+	<string>RTRIM</string>
+	<string>SOUNDEX</string>
+	<string>CONVERT</string>
+	<string>NCHAR</string>
+	<string>newid</string>
+	<string>SUBSTRING</string>
+	<string>PATINDEX</string>
+	<string>SYSDATETIME</string>
+	<string>SUM</string>
+	<string>SYSDATETIMEOFFSET</string>
+	<string>REPLACE</string>
+	<string>GetAncestor</string>
+	<string>DATEDIFF</string>
+	<string>SYSUTCDATETIME</string>
+	<string>ToString</string>
+	<string>UNICODE</string>
+	<string>UPPER</string>
+	<string>STUFF</string>
+	<string>SPACE</string>
+	<string>QUOTENAME</string>
+	<string>CURRENT_TIMESTAMP</string>
+	<string>LTRIM</string>
+	<string>GETDATE</string>
+	<string>LOWER</string>
+	<string>STR</string>
+	<string>GETUTCDATE</string>
+	<string>IIF</string>
+	<string>REVERES</string>
+	<string>DIFFERENCE</string>
+	<string>ASCII</string>
+	<string>CHAR</string>
+	<string>FORMAT</string>
+	<string>CHARINDEX</string>
+	<string>CONCAT</string>
+</array>
+</plist>
